@@ -76,7 +76,7 @@ class ProcesadorTransacciones {
         for (transaccion in transacciones){
             agrega = agregador(agrega, transaccion)
         }
-        return agrega*/
+        return agrega(pa principiantes como io)*/
     }
 
         // Parte D: Composición de Funciones
