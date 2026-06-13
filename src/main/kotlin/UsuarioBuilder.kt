@@ -104,15 +104,6 @@ class UsuarioBuilder {
             this.roles = roles.toMutableList()
             this.configuracion = ConfiguracionUsuario()
         }
-        TODO(
-            """
-            Implementar usando 'apply':
-            - Crear usuario y configurar todas sus propiedades
-            - Establecer activo = true
-            - Asignar roles
-            - Crear configuración por defecto
-        """,
-        )
     }
 
     fun actualizarUsuario(
@@ -120,7 +111,6 @@ class UsuarioBuilder {
         actualizacion: Usuario.() -> Unit,
     ): Usuario {
         return Usuario().apply { actualizacion() }
-        TODO("Implementar: Usar 'apply' para aplicar la función de actualización al usuario")
     }
 
     // Parte D: Función also
