@@ -41,15 +41,16 @@ class UsuarioBuilder {
     fun validarUsuarios(usuarios: List<Usuario>): List<List<Validacion>> {
         return usuarios.map {
             listOf(
-                Validacion(campo = "nombre", valido = it.nombre.isNotEmpty(), mensaje = "El nombre no puede estar vacío"),
-                Validacion(campo = "email", valido = '@' in it.email, mensaje = "El email debe contener un @"),
-                Validacion(campo = "roles", valido = it.roles.isNotEmpty(), mensaje = "El usuario debe tener al menos un rol")
+                Validacion("nombre", it.nombre.isNotEmpty(), "El nombre no debe estar vacío"),
+                Validacion("email", it.email.contains("@"), "El email debe contener @"),
+                Validacion("roles", it.roles.isNotEmpty(), "Debe tener al menos un rol")
             )
         }
     }
 
     fun procesarTextos(textos: List<String>): List<String> {
-        return textos.map { it.trim().lowercase() } // Modifica cada texto con 'it'
+        return textos.map { it.trim() } // Modifica cada texto con 'it'
+            .map { it.lowercase() }
             .filter { it.isNotEmpty() }   // Filtra los que no estén vacíos
 
     }
@@ -57,25 +58,36 @@ class UsuarioBuilder {
     // Parte B: Función run
 
     fun calcularNivelAcceso(usuario: Usuario): Int {
-        TODO(
-            """
-            Implementar usando 'run':
-            - Si activo: +10 puntos
-            - Por cada rol: +5 puntos
-            - Si email contiene '@empresa.com': +5 puntos
-        """,
-        )
+        return usuario.run {
+            var puntos = 0
+            if (activo == true) {
+                puntos += 10
+            }
+            for (role in roles) {
+                puntos += 5
+            }
+            if (email.contains("@empresa.com")) {
+                puntos += 5
+            }
+            puntos
+        }
     }
 
     fun crearUsuarioConTipo(tipo: String): Usuario {
-        TODO(
-            """
-            Implementar usando 'run' para decidir configuración:
-            - Si tipo es "ADMIN": roles=[ADMIN], nivelPrivacidad=3, notificaciones=true
-            - Si tipo es "USER": roles=[USER], nivelPrivacidad=1, notificaciones=false
-            - Otros casos: configuración por defecto
-        """,
-        )
+        return Usuario().run {
+
+            if (tipo == "ADMIN") {
+                roles.add("ADMIN")
+                configuracion.nivelPrivacidad = 3 //configuracion esta en el data class usuario
+                configuracion.notificaciones = true
+            }
+            else if (tipo == "USER") {
+                roles.add("USER")
+                configuracion.nivelPrivacidad = 1
+                configuracion.notificaciones = false
+            }
+            this
+        }
     }
 
     // Parte C: Función apply
@@ -85,6 +97,13 @@ class UsuarioBuilder {
         email: String,
         roles: List<String>,
     ): Usuario {
+        return Usuario().apply {
+            this.nombre = nombre
+            this.email = email
+            this.activo = true
+            this.roles = roles.toMutableList()
+            this.configuracion = ConfiguracionUsuario()
+        }
         TODO(
             """
             Implementar usando 'apply':
@@ -100,6 +119,7 @@ class UsuarioBuilder {
         usuario: Usuario,
         actualizacion: Usuario.() -> Unit,
     ): Usuario {
+        return Usuario().apply { actualizacion() }
         TODO("Implementar: Usar 'apply' para aplicar la función de actualización al usuario")
     }
 
