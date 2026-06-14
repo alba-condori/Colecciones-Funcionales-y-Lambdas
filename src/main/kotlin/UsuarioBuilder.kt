@@ -49,9 +49,9 @@ class UsuarioBuilder {
     }
 
     fun procesarTextos(textos: List<String>): List<String> {
-        return textos.map { it.trim() } // Modifica cada texto con 'it'
+        return textos.map { it.trim() }
             .map { it.lowercase() }
-            .filter { it.isNotEmpty() }   // Filtra los que no estén vacíos
+            .filter { it.isNotEmpty() }
 
     }
 
@@ -78,7 +78,7 @@ class UsuarioBuilder {
 
             if (tipo == "ADMIN") {
                 roles.add("ADMIN")
-                configuracion.nivelPrivacidad = 3 //configuracion esta en el data class usuario
+                configuracion.nivelPrivacidad = 3
                 configuracion.notificaciones = true
             }
             else if (tipo == "USER") {
@@ -120,90 +120,134 @@ class UsuarioBuilder {
         email: String,
         onLog: (String) -> Unit,
     ): Usuario {
-        TODO(
-            """
-            Implementar usando 'also' para logging:
-            - Crear usuario
-            - Loggear "Usuario creado: [nombre]"
-            - Asignar email y loggear "Email asignado: [email]"
-            - Activar usuario y loggear "Usuario activado"
-        """,
-        )
+        return Usuario(nombre = nombre).also {
+            onLog("Usuario creado: ${it.nombre}")
+
+            it.email = email
+            onLog("Email asignado: ${it.email}")
+
+            it.activo = true
+            onLog("Usuario activado")
+        }
+
     }
 
     fun crearYValidar(
         nombre: String,
         email: String,
     ): Pair<Usuario, Boolean> {
-        TODO(
-            """
-            Implementar usando 'also' para validación:
-            - Crear usuario
-            - Validar que nombre no esté vacío y email contenga '@'
-            - Retornar par (usuario, esValido)
-        """,
-        )
+        var esValido = false
+        val usuario = Usuario(nombre = nombre, email = email).also {
+            esValido = it.nombre.isNotEmpty() && it.email.contains("@")
+        }
+        return Pair(usuario, esValido)
     }
 
     // Parte E: Función let
 
     fun procesarEmailOpcional(email: String?): String {
-        TODO(
-            """
-            Implementar usando 'let':
-            - Si email no es null: "Usuario con email: [email]"
-            - Si email es null: "Usuario sin email"
-        """,
-        )
+        return email?.let {
+            "Usuario con email: $it"
+        }
+            ?: "Usuario sin email"
     }
 
     fun generarMensajesBienvenida(usuarios: List<Usuario>): List<String> {
-        TODO(
-            """
-            Implementar usando 'let':
-            - Solo procesar usuarios activos con email no vacío
-            - Generar mensaje "Bienvenido/a [nombre] ([email])"
-        """,
-        )
+        return usuarios
+            .filter { it.activo && it.email.isNotEmpty() }
+            .map { usuario -> usuario.let {
+                    "Bienvenido/a ${it.nombre} (${it.email})"
+                }
+            }
     }
 
     // Parte F: Combinación de Scope Functions
 
     fun procesarUsuarioComplejo(datosBase: Map<String, String>): Usuario? {
-        TODO(
-            """
-            Implementar combinando scope functions:
-            1. Verificar que existan 'nombre' y 'email' (si no, retornar null)
-            2. Crear usuario con 'run'
-            3. Configurar propiedades con 'apply'
-            4. Si departamento es "IT", usar 'also' para configuración especial (tema oscuro, rol IT_USER)
-            5. Retornar usuario configurado
-        """,
-        )
+        val nombre = datosBase["nombre"]
+        val email = datosBase["email"]
+        val departamento = datosBase["departamento"]
+
+        if (nombre == null || email == null) return null
+
+        return run {
+            Usuario()
+        }.apply {
+            this.nombre = nombre
+            this.email = email
+        }.also {
+            if (departamento == "IT") {
+                it.roles.add("IT_USER")
+                it.configuracion.tema = "oscuro"
+            }
+        }
     }
 
     fun procesarLoteUsuarios(usuarios: List<Usuario>): List<Usuario> {
-        TODO(
-            """
-            Implementar pipeline con scope functions:
-            1. Activar todos los usuarios (apply)
-            2. Asignar rol USER si no tienen roles (also)
-            3. Configurar notificaciones = true (apply)
-            4. Si nombre es "Admin", agregar rol ADMIN y nivelPrivacidad = 3 (run)
-        """,
-        )
+        return usuarios.map { usuario -> usuario.apply {
+                    activo = true
+                }
+                .also {
+                    if (it.roles.isEmpty()) {
+                        it.roles.add("USER")
+                    }
+                }
+                .apply {
+                    configuracion.notificaciones = true
+                }
+                .run {
+                    if (nombre == "Admin") {
+                        roles.add("ADMIN")
+                        configuracion.nivelPrivacidad = 3
+                    }
+
+                    this
+                }
+        }
     }
 
     fun parsearYCrearUsuario(datosRaw: String): Usuario? {
-        TODO(
-            """
-            Implementar parsing completo:
-            1. Parsear formato "clave:valor|clave:valor|..."
-            2. Crear usuario con los datos parseados
-            3. Usar scope functions apropiadas para cada transformación
-            4. Retornar null si el formato es inválido
-        """,
-        )
+        val fragmentos = datosRaw.split("|").map { it.trim() }
+        if (fragmentos.isEmpty()) return null
+
+        val datos = mutableMapOf<String, String>()
+
+        for (fragmento in fragmentos) {
+            if (fragmento.contains(":")) {
+                val partes = fragmento.split(":")
+                val clave = partes[0].trim()
+                val valor = partes[1].trim()
+                datos[clave] = valor
+            }
+        }
+
+        if (!datos.containsKey("id") || !datos.containsKey("nombre") || !datos.containsKey("email")) {
+            return null
+        }
+
+        val idNumero = datos["id"]?.toIntOrNull() ?: return null
+
+        return Usuario().apply {
+            id = idNumero
+            nombre = datos["nombre"] ?: ""
+            email = datos["email"] ?: ""
+            activo = (datos["activo"] == "true")
+
+            val textoRoles = datos["roles"]
+            if (!textoRoles.isNullOrEmpty()) {
+                val listaRoles = textoRoles.split(",")
+                for (rol in listaRoles) {
+                    roles.add(rol.trim())
+                }
+            } else {
+                roles.add("USER")
+            }
+
+            configuracion = ConfiguracionUsuario().apply {
+                tema = datos["tema"] ?: "claro"
+                idioma = datos["idioma"] ?: "es"
+            }
+        }
     }
 }
 
